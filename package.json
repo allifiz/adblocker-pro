@@ -1,0 +1,13 @@
+{
+  "name": "adblocker-pro",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check engine.js && node --check background.js && node --check content.js && node --check popup.js && node --check options.js && npm test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,10 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {domain,normalize,matchesHost,parseList,makeRules} from "../engine.js";
+import {readFileSync,existsSync} from "node:fs";
+test("domain validation and boundaries",()=>{assert.equal(domain("Example.COM."),"example.com");assert.equal(domain("https://example.com"),null);assert.equal(matchesHost("notexample.com",["example.com"]),false);assert.equal(matchesHost("sub.example.com",["example.com"]),true);});
+test("parser ignores complex rules and overlapping exceptions",()=>{assert.deepEqual(parseList("||ads.test^\n||tracker.test^$third-party\n||ads.test/path\n||blocked.test^$script\n||parent.test^\n@@||sub.parent.test^$script\n||safe.test^\n@@||safe.test^"),["ads.test","tracker.test"]);});
+test("master switch disables all dynamic rules",()=>assert.deepEqual(makeRules({enabled:false},{ads:["ads.test"]}),[]));
+test("site exception outranks custom rules and no duplicate IDs",()=>{const rules=makeRules({allowlist:["site.test"],customDomains:["ads.test"]},{ads:["ads.test"],privacy:["ads.test"]});assert.equal(new Set(rules.map(x=>x.id)).size,rules.length);assert.ok(rules.some(x=>x.action.type==="allowAllRequests"&&x.priority===100));assert.ok(rules.some(x=>x.action.type==="block"&&x.priority===5));});
+test("categories and settings validation",()=>{assert.ok(!makeRules({ads:false,privacy:false},{ads:["ads.test"],privacy:["track.test"]}).length);assert.deepEqual(normalize({allowlist:["SITE.test","site.test","bad"]}).allowlist,["site.test"]);});
+test("manifest references and static rule IDs",()=>{const m=JSON.parse(readFileSync("manifest.json"));assert.equal(m.manifest_version,3);for(const path of [m.background.service_worker,m.action.default_popup,m.options_ui.page,...m.content_scripts.flatMap(x=>x.js)])assert.ok(existsSync(path),path);for(const resource of m.declarative_net_request.rule_resources){const rules=JSON.parse(readFileSync(resource.path));assert.ok(rules.length>0);assert.equal(new Set(rules.map(x=>x.id)).size,rules.length);assert.ok(rules.every(x=>x.condition.domainType==="thirdParty"));}});
