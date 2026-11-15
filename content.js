@@ -73,8 +73,8 @@
     const move=e=>{target=e.target;if(!(target instanceof Element)||target===box)return;const r=target.getBoundingClientRect();Object.assign(box.style,{display:"block",left:r.left+"px",top:r.top+"px",width:r.width+"px",height:r.height+"px"});};
     const key=e=>{if(e.key==="Escape"){e.preventDefault();stop();}};
     const click=async e=>{
-      e.preventDefault();e.stopImmediatePropagation();const el=target;stop();
-      if(!el||el===document.body||el===document.documentElement)return;
+      e.preventDefault();e.stopImmediatePropagation();const el=e.target;stop();
+      if(!(el instanceof Element)||el===document.body||el===document.documentElement)return;
       const selector=selectorFor(el);if(!selector)return;
       try{const r=await chrome.runtime.sendMessage({type:"addElement",selector});if(r?.ok)hide(el);}catch{}
     };
