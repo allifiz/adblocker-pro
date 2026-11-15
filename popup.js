@@ -15,7 +15,7 @@ async function render(){
   $("site").disabled=!host;$("picker").disabled=!host||!settings.enabled||paused;
   try{const r=await chrome.tabs.sendMessage(tab.id,{type:"pageStats"});$("hidden").textContent=r.hidden;}catch{$("hidden").textContent="—";}
 }
-function bind(id,fn){$(id).addEventListener("click",async()=>{const b=$(id);b.disabled=true;try{await fn();await render();}catch(e){$("message").textContent=e.message;}finally{if(id==="power")b.disabled=false;}});}
+function bind(id,fn){$(id).addEventListener("click",async()=>{const b=$(id);b.disabled=true;try{await fn();await render();}catch(e){$("message").textContent=e.message;}finally{if(id==="power"||id==="site"&&host)b.disabled=false;}});}
 bind("power",async()=>{await call({type:"save",settings:{...settings,enabled:!settings.enabled}});if(host)await chrome.tabs.reload(tab.id);});
 bind("site",async()=>{await call({type:"toggleSite",host});await chrome.tabs.reload(tab.id);});
 $("picker").addEventListener("click",async()=>{try{const r=await chrome.tabs.sendMessage(tab.id,{type:"picker"});if(!r?.ok)throw Error("Picker unavailable. Reload the page first.");window.close();}catch(e){$("message").textContent=e.message;}});
