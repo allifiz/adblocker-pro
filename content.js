@@ -1,5 +1,8 @@
 (()=>{
   "use strict";
+  // Static injection and the startup sweep can race. Initialize once per document.
+  if(globalThis.__adblockerProContentActive)return;
+  globalThis.__adblockerProContentActive=true;
   const GENERAL=["ins.adsbygoogle","[data-ad-slot]","[data-ad-client]","[data-ad-unit]","[data-ad-format]","iframe[src*='doubleclick.net']","iframe[src*='googlesyndication.com']","[id^='google_ads_iframe_']","[id^='div-gpt-ad-']","[id^='ad-slot-']","[class~='ad-banner']","[class~='ad-container']","[class~='advertisement']","[data-testid='ad-container']"];
   const SITE={
     "youtube.com":["ytd-display-ad-renderer","ytd-promoted-sparkles-web-renderer","ytd-promoted-sparkles-text-search-renderer","ytd-ad-slot-renderer","ytd-in-feed-ad-layout-renderer","#player-ads","#masthead-ad"],

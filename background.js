@@ -1,5 +1,7 @@
 import {DEFAULTS,SOURCES,domain,normalize,parseList,makeRules} from "./engine.js";
+import {activateOpenTabs} from "./auto-tabs.js";
 const dnr=chrome.declarativeNetRequest;
+async function sweep(){try{return await activateOpenTabs(chrome);}catch(e){console.warn("Open tab activation failed",e);}}
 let queue=Promise.resolve();
 function serial(fn){const p=queue.then(fn);queue=p.catch(()=>{});return p;}
 async function read(){const v=await chrome.storage.local.get(["settings","cache","lastUpdate","updateError"]);return {...v,settings:normalize(v.settings),cache:v.cache||{}};}
@@ -14,6 +16,7 @@ async function save(settings){
   const old=await read(), next=normalize(settings);
   try{await apply(next,old.cache);await chrome.storage.local.set({settings:next});}
   catch(e){await apply(old.settings,old.cache).catch(()=>{});throw e;}
+  if(next.enabled&&!old.settings.enabled)await sweep();
   return next;
 }
 async function refresh(){
@@ -42,6 +45,7 @@ async function init(){
   await chrome.storage.local.set({settings:v.settings});
   await dnr.setExtensionActionOptions({displayActionCountAsBadgeText:true});
   await chrome.alarms.create("filters",{periodInMinutes:1440,delayInMinutes:5});
+  await sweep();
 }
 chrome.runtime.onInstalled.addListener(()=>serial(init).catch(console.error));
 chrome.runtime.onStartup.addListener(()=>serial(init).catch(console.error));
