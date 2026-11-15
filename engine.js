@@ -35,7 +35,8 @@ export function parseList(text, limit=9000){
   // Remove both overlapping ancestors and descendants of known exceptions.
   const parents=new Set();
   for(const d of exceptions){const parts=d.split(".");for(let i=0;i<parts.length-1;i++)parents.add(parts.slice(i).join("."));}
-  return [...block].filter(d=>!parents.has(d)&&!matchesHost(d,[...exceptions])).sort().slice(0,limit);
+  function overlaps(d){const parts=d.split(".");for(let i=0;i<parts.length-1;i++)if(exceptions.has(parts.slice(i).join(".")))return true;return false;}
+  return [...block].filter(d=>!parents.has(d)&&!overlaps(d)).sort().slice(0,limit);
 }
 export function makeRules(settings, cache={}){
   const s=normalize(settings), rules=[];
