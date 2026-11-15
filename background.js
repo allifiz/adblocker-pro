@@ -48,7 +48,7 @@ chrome.runtime.onStartup.addListener(()=>serial(init).catch(console.error));
 chrome.alarms.onAlarm.addListener(a=>{if(a.name==="filters")serial(async()=>{if((await read()).settings.autoUpdate)await refresh();}).catch(console.warn);});
 chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
   if(sender.id!==chrome.runtime.id||!msg||typeof msg!=="object")return;
-  const pageSender=Boolean(sender.tab);
+  const pageSender=!String(sender.url||"").startsWith(chrome.runtime.getURL(""));
   // Content scripts may only add a selector to their own host, not modify network settings.
   if(pageSender&&msg.type!=="addElement")return;
   serial(async()=>{
@@ -68,7 +68,9 @@ chrome.runtime.onMessage.addListener((msg,sender,reply)=>{
         const selector=msg.selector;
         if(!host||typeof selector!=="string"||selector.length>500||!selector)throw Error("Invalid selector");
         const elements={...v.settings.elements,[host]:[...(v.settings.elements[host]||[]),selector]};
-        return {settings:await save({...v.settings,elements})};
+        const next=normalize({...v.settings,elements});
+        await chrome.storage.local.set({settings:next});
+        return {settings:next};
       }
       case "refresh":return await refresh();
       default:throw Error("Unknown command");
